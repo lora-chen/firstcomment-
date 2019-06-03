@@ -39,7 +39,7 @@ TEST_LABEL = 'test_label.txt'
 
 
 ## parameter setting
-epochs = 10                          # Epoch of learning processing
+epochs = 2                          # Epoch of learning processing
                                         # Save time set epochs as 10
                                         # Epochs = 50
 batch_size = 5                         # Batch Gradient decrease
@@ -147,7 +147,20 @@ if __name__=='__main__':
                               shuffle=False,
                               num_workers=4
                              )
-    
+    # dataset：加载的数据集(Dataset对象)
+    # batch_size：每一个batch拿几个数据
+    # shuffle:：是否将数据打乱
+    # sampler： 样本抽样，后续会详细介绍
+    # num_workers：使用多进程加载的进程数，0
+    # 代表不使用多进程
+    # collate_fn： 如何将多个样本数据拼接成一个batch，一般使用默认的拼接方式即可
+    # pin_memory：是否将数据保存在pin
+    # memory区，pin
+    # memory中的数据转到GPU会快一些
+    # drop_last：dataset中的数据个数可能不是batch_size的整数倍，drop_last为True会将多出来不足一个batch的数据丢弃
+
+
+
     optimizer = optim.SGD(model.parameters(), lr=learning_rate)   # Optimaztion: SGD 算法
         # class torch.optim.SGD(params, lr=, momentum = 0,dampening = 0,weight_decay = 0,nesterov = False)
         # params(iterable) – 待优化参数的iterable或者是定义了参数组的dict
@@ -159,7 +172,7 @@ if __name__=='__main__':
 
     loss_function = nn.CrossEntropyLoss()           # 交叉熵损失函数 官方文档上有详细的公式计算，这里就不备注了
 
-    train_loss_ = []       # 初始化训练和测试集正确率和损失
+    train_loss_ = []       # 这里创建的是一个数组，为了之后绘图的时候按照值和他们对应的索引画出变化图
     test_loss_ = []
     train_acc_ = []
     test_acc_ = []
@@ -176,7 +189,7 @@ if __name__=='__main__':
                                                              # enumerate的作用就是对可迭代的数据进行标号并将其里面的数据和标号一并打印出来。
                                                              # 每一个 iter 释放一小批数据用来学习
                                                              # ??????????这里读数据怎么读的看不懂
-
+                                                             # 文档在dataloade.py里面
                 train_inputs, train_labels = traindata       # train_inputs torch.Size([5, 32] 5来自batch_size, 32 来自sen_len
                                                              # train_labels torch.Size([5, 1])  5来自batch_size,真实label
 
@@ -198,14 +211,17 @@ if __name__=='__main__':
            # 现在还不是很理解
 
             model.batch_size = len(train_labels)   # batch_size = 5
-            model.hidden = model.init_hidden()     # model.hidden: tuple type return (h0, c0)
+            model.hidden = model.init_hidden()     # model.hidden: tuple type return (h0, c0)  size 5 * 50 tensors,
 
             # print(train_inputs.shape)  torch.Size([5, 32])
             # print(train_inputs.t().shape)    torch.Size([32, 5])
             output = model(train_inputs.t())    # Transpose train_inputs tensor and use it as input
                                                 # Output torch.Size([5, 8])
 
+            # print(Variable(train_labels).size())
             loss = loss_function(output, Variable(train_labels))  # Calculate error cross_entropy(predicted value, class )
+                                                                  # train_labels torch.Size([5, 1])
+                                                                  # Variable(train_labels)  torch.Size([5]
                                                                   # 公式在官方文档里，这里不注释了
 
 
@@ -235,7 +251,6 @@ if __name__=='__main__':
             optimizer.step()
             # apply所有的梯度以更新parameter的值.因为step（）更新所有参数，所以不用指明梯度
 
-
             _, predicted = torch.max(output.data, 1) #  返回每一行中最大值的那个元素，且返回其索引
                                                      #  Predicted 前面那个逗号是为了返回索引，而不是具体的值，但是具体怎么看代码不知道 ？？？？？？？
                                                      #  输入：The size of output.data torch.Size([5, 8]),
@@ -244,6 +259,7 @@ if __name__=='__main__':
             # test_loss_ = []
             # train_acc_ = []
             # test_acc_ = []
+            # print(train_labels.size())
 
             total_acc += (predicted == train_labels).sum()  # 多少个训练对了，是个size 0的tensor，要用。item（）来看
             # print (total_acc.item())

@@ -105,7 +105,9 @@ class TxtDatasetProcessing(Dataset):
                         clip = True
                         break
                     # ids[token] = self.dictionary.word2idx[word]
-                    txt[count] = self.corpus.dictionary.word2idx[word.strip()] # 对于32 size的txt tensor， 把每个词对应的index输入  [1|2|1|2|3|4...] 32位
+                    txt[count] = self.corpus.dictionary.word2idx[word.strip()] # 对于32 size的txt tensor， 把每个词对应的index输入
+                                                                               # 比如说 a,b c d 对应 1，2，3，4，然后刚好文本长度为32，为 a,b,a,b,c,d
+                                                                               #                                对应的tensor为[1|2|1|2|3|4...] 32位
                     count += 1
             if clip: break
 
@@ -113,7 +115,14 @@ class TxtDatasetProcessing(Dataset):
         #         label_filepath = os.path.join(data_path, label_filename)
         #         fp_label = open(label_filepath, 'r')                 # Open train_label.txt file
         #         labels = [int(x.strip()) for x in fp_label]          # Read all label   【1|3|0|0.....】
-        label = torch.LongTensor([self.label[index]]) # 创建一个1维的tensor， 里面保存的是当前第index个训练数据的真实label
+        label = torch.LongTensor([self.label[index]]) # 创建一个torch.Size([1])维的tensor， 里面保存的是当前第index个训练数据的真实labe
+
+        # print("Aaaaa")
+        # print (label.size())
+        # print("BBB")
+
+        # labels = [int(x.strip()) for x in fp_label]  # Read all label   【1|3|0|0.....】
+
         return txt, label                  # 最后是把所有的word切成了一个个32维的tensor “txt”， 然后返回一个一个的"txt"tensor和它们对应的真实label "label" 一维tensor
     def __len__(self):
         return len(self.txt_filename)

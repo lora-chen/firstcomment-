@@ -63,7 +63,7 @@ class LSTMClassifier(nn.Module):
         # x1 = nn.Linear(hidden_dim, label_size).weight.shape   torch.Size([8, 50])
         # x2 = nn.Linear(hidden_dim, label_size).bias.shape      torch.Size([8])
 
-        # 输入应该是一个  什么 * 50 的torch
+        # 输入应该是一个  8 * 50 的torch
 
         # 有点难理解这里的数据结构 ？？？？？？？？？？？？？？？？？？？
 
@@ -94,7 +94,7 @@ class LSTMClassifier(nn.Module):
         else:
             # 在Torch中的Variable就是一个存放会变化的值的地理位置.里面的值会不停的变化.值是Tensor如果用一个 Variable进行计算, 那返回的也是一个同类型的
             # Variable
-            # Create two size 5* 50 tensors, filling with 0
+            # Create two size 5 * 50 tensors, filling with 0   这里的5应该是LSTM对应的5个状态还是？   ???????
 
             # 一开始那个1意味着小数点后一位
             # print(torch.zeros(1, 3, 5))
@@ -121,7 +121,7 @@ class LSTMClassifier(nn.Module):
 
         embeds = self.word_embeddings(sentence)
         # Input : Sentence tensor size 32 *5    print (sentence.size()) torch.Size([32, 5])
-        # Output: Embeds tensor 32* 5* 10       print (embeds.size())  torch.Size([32, 5, 100])
+        # Output: Embeds tensor 32* 5* 10       print (embeds.size())  torch.Size([32, 5, 100])t
 
         # x = embeds
         x = embeds.view(len(sentence), self.batch_size, -1)
@@ -144,8 +144,10 @@ class LSTMClassifier(nn.Module):
         lstm_out, self.hidden = self.lstm(x, self.hidden)
         # 右边相当于把X作为输入，h0和c0作为初始状态变量  == input, (h_0, c_0)  h0和 c0 是两个5* 50 tensors，初始值都为0.0，然后不断迭代
         # 怎么看出循环过程 ？？？？？？？？？？？
-        # 左边是LSTM输出 output, (h_n, c_n)
+        # 左边是LSTM输出 output, (h_n, c_n)             对于LSTM，size()为 torch.Size([32, 5, 50])，最后一步为torch.Size([32, 4, 50])
         # output(seq_len, batch, hidden_size * num_directions):
+        # print (lstm_out.size())
+
         #                 保存RNN最后一层的输出的Tensor。
         #                 如果输入是torch.nn.utils.rnn.PackedSequence，那么输出也是torch.nn.utils.rnn.PackedSequence。
         # h_n(num_layers * num_directions, batch, hidden_size): Tensor，保存着RNN最后一个时间步的隐状态。
@@ -153,6 +155,7 @@ class LSTMClassifier(nn.Module):
 
 
         y  = self.hidden2label(lstm_out[-1])
+        # print (lstm_out[-1].shape)
         # Input: The last output of LSTM_Out  (-1 means last output)  print ( lstm_out[-1].shape)---torch.Size([5, 50])
         # Output:  print( y.shape)  一开始都是torch.Size([5, 8])，最后一个是 torch.Size([4, 8]) ????????????????????????
         # 在 t 时刻，LSTM 的输入有三个：当前时刻网络的输入值 x_t、上一时刻 LSTM 的输出值 h_t-1、以及上一时刻的单元状态 c_t-1；
@@ -166,8 +169,10 @@ class LSTMClassifier(nn.Module):
         # print(lstm_out[-1].shape)
         # print("This is Lstm_out[-1]")
         # print(y.shape)
+        # print("A")
+        # print(y.size())
         # print ("This is Y")
-        return y   #最后返回的应该是一个4.8的tensor
+        return y   # 最后返回的是一个4.8的tensor  torch.Size([5, 8])    torch.Size([4, 8])
 
     # 编写前向过程
     # '''def forward(self, inputs):
